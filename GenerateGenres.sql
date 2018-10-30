@@ -24,8 +24,8 @@ select distinct * from(
 		substr(s, stpos, case endpos when 0 then length(s)-stpos+1 else endpos-stpos end)
 		from split
 	)
-	select 'insert into genre values(' || replace(regexp_substr(s, '[^(․)]+', 1), 1) || ' , ''' || replace(regexp_substr(s, '[^(․)]+$', 1), 1) || ''');' from final 
-	where replace(regexp_substr(s, '[^(․)]+', 1), 1) is not null order by stpos
+	select 'insert into genre values(' || regexp_substr(s, '([0-9])\w+') || ' , ''' || regexp_substr(s, '[^(․)]+$', 1) || ''');' from final 
+    	where regexp_substr(s, '([0-9])\w+') is not null order by stpos
 );
 
 select 'commit;' from dual;

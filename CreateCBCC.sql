@@ -10,7 +10,7 @@ create table artist (
 -- https://www.uecmovies.com/movies/ratings
 -- https://filmratings.com/RatingsGuide
 create table certification (
-	id          number(1)
+	id          number(1) generated always as identity
         	constraint cert$pk primary key,
 	code        varchar2(5) 
         	constraint cert$code$nn not null 
@@ -23,7 +23,7 @@ create table certification (
 
 
 create table status (
-	id          number(1)
+	id          number(1) generated always as identity
 		constraint status$pk primary key,
 	name        varchar2(15)
 		constraint status$name$nn not null

@@ -40,7 +40,6 @@ CREATE OR REPLACE PACKAGE AlimCB AS
 
 	FUNCTION GenreF (identifiant movie.id%type) RETURN Genres;
 	
-	FUNCTION VerificationValidite (identifiant movie.id%type) RETURN NUMBER;
 END AlimCB;
 /
 show errors
