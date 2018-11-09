@@ -5,12 +5,16 @@ drop user cc cascade;
 drop role role_test;
 
 create role role_test not identified;
+grant alter session to role_test;
+grant create database link to role_test;
 grant create session to role_test;
 grant create procedure to role_test;
 grant create sequence to role_test;
 grant create table to role_test;
 grant create trigger to role_test;
+grant create synonym to role_test;
 grant create type to role_test;
+grant create job to role_test;
 
 create user cb profile default identified by oracle default tablespace users temporary tablespace temp account unlock;
 alter user cb quota unlimited on users;
