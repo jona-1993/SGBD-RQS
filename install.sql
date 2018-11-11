@@ -1,4 +1,4 @@
-connect cb/oracle@localhost/orcl
+connect cb/oracle@192.168.0.25/orcl
 
 @DropCBCC.sql
 
@@ -20,7 +20,7 @@ connect cb/oracle@localhost/orcl
 disconnect
 
 
-connect cc/oracle@localhost/orcl
+connect cc/oracle@192.168.0.25/orcl
 
 @DropCBCC.sql
 

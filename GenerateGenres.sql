@@ -1,5 +1,5 @@
 
-connect cb/oracle@localhost/orcl
+connect cb/oracle@192.168.0.25/orcl
 
 -- Generate File GENRES
 set feedback off

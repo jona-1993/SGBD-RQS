@@ -1,5 +1,60 @@
 create or replace package body RechercheCC as
 
+	procedure Authentication(arglogin in varchar2, passwd in varchar2) as
+		authenticated number;
+		loginfiltred users.login%type;
+		passwordfiltred users.password%type;
+		too_much_results exception; -- Si il y a une injection SQL qui passe, je sais comment il y est parvenu
+		begin
+			-- éviter le SQL Injection au mieux
+			select regexp_replace(arglogin, '\*|''|\;|\%|\.', '0') into loginfiltred from dual;
+			select regexp_replace(passwd, '\*|''|\;|\%|\.', '0') into passwordfiltred from dual;
+			
+			select count(*) into authenticated from users where login like loginfiltred and password like passwordfiltred;
+			if(authenticated = 1) then
+				log_pkg.LogInfo('Authentifié: ' || arglogin, 'Authentication');
+				htb.send('application/json', 200);
+			elsif(authenticated = 0) then
+				log_pkg.LogInfo('Accès refusé: ' || arglogin, 'Authentication');
+				htb.send('application/json', 403); -- 403 = Accès refusé
+			else
+				raise too_much_results;
+			end if;
+		exception
+			when too_much_results then log_pkg.LogErreur('Trop de tuples retourné - LOG= ' || arglogin || 'PASS= ' || passwd, true, 'Authentication'); raise_application_error(-20600, 'Une erreur louche est survenue !');
+			when others then raise;
+	end Authentication;
+	
+	procedure Register(argnom in users.nom%type, argprenom in users.prenom%type, arglogin in users.login%type, argpasswd in users.password%type) as
+		created users.login%type;
+		loginfiltred users.login%type;
+		passwordfiltred users.password%type;
+		erreursyntaxesql exception;
+		begin
+			-- éviter le SQL Injection au mieux
+			select regexp_replace(arglogin, '\*|''|\;|\%|\.', '0') into loginfiltred from dual;
+			select regexp_replace(argpasswd, '\*|''|\;|\%|\.', '0') into passwordfiltred from dual;
+			
+			if arglogin not like loginfiltred or argpasswd not like passwordfiltred then
+				raise erreursyntaxesql;
+			end if;
+			
+			insert into users values (arglogin, argnom, argprenom, argpasswd) returning login into created;
+			
+            commit;
+            
+			if(length(created) > 0) then
+				log_pkg.LogInfo('Compte créé: ' || created, 'Register');
+				htb.send('application/json', 200);
+			else
+				log_pkg.LogInfo('Compte non créé: ' || arglogin, 'Register');
+				htb.send('application/json', 403); -- 403 = Accès refusé
+			end if;
+            
+		exception
+			when erreursyntaxesql then log_pkg.LogErreur('Syntaxe sql dans - LOG= ' || arglogin || 'PASS= ' || argpasswd, true, 'Register'); raise_application_error(-20500, 'De la syntaxe sql est dans l''id ou le password');
+			when others then log_pkg.LogErreur('Erreur autre', true, 'Register'); raise;
+	end Register;
 	
 	procedure GetFilmById(numero in number) as
         retour varchar2(100);
@@ -76,33 +131,31 @@ create or replace package body RechercheCC as
                 movie.id "id",
                 movie.title "title",
                 movie.original_title "original_title",
-                movie.status "status",
                 to_char(movie.release_date, 'DD/MM/YYYY') "release_date",
                 movie.vote_average "vote_average",
                 movie.vote_count "vote_count",
-                movie.certification "certification",
                 movie.runtime "runtime",
-                movie.poster "poster",
+                apex_web_service.blob2clobbase64(movie.poster) "poster", -- Conversion du blob en clob base64
                 cursor(
                 select genre.id "id", genre.name "name"
                 from genre, movie_genre where movie_genre.movie = films.id and movie_genre.genre = genre.id
-            ) "Genre",
+            ) "genres",
                 cursor(
                 select artist.id "id", artist.name "name"
                 from artist, movie_actor where movie_actor.movie = films.id and movie_actor.actor = artist.id
-            ) "Actor",
+            ) "acteurs",
                 cursor(
                 select artist.id "id", artist.name "name"
                 from artist, movie_director where movie_director.movie = films.id and movie_director.director = artist.id
-            ) "Director",
+            ) "realisateurs",
                 cursor(
                     select certification.id "id", certification.code "code", certification.name "name", certification.definition "definition", certification.description "description"
                     from certification, movie where movie.id = films.id and certification.id = movie.certification
-                ) "Certification",
+                ) "certifications",
                 cursor(
                     select status.id "id", status.name "name"
                     from status, movie where movie.id = films.id and status.id = movie.status
-                ) "Status"
+                ) "status"
             from movie, table(films) films where movie.id = films.id
             order by movie.id;
             

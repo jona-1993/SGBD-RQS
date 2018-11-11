@@ -16,6 +16,10 @@ CREATE OR REPLACE PACKAGE RechercheCC AS
 	TYPE Movies IS TABLE OF MovieRecord INDEX BY BINARY_INTEGER;
 
 	--Déclaration
+	procedure Register(argnom in users.nom%type, argprenom in users.prenom%type, arglogin in users.login%type, argpasswd in users.password%type);
+	
+	procedure Authentication(arglogin in varchar2, passwd in varchar2);
+	
 	procedure GetFilmByID (numero IN NUMBER);
 
 	procedure SerializeFilm(films in Movies);
