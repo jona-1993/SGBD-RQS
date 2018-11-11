@@ -1,6 +1,6 @@
 create or replace package body RechercheCC as
 
-	procedure Authentication(arglogin in varchar2, passwd in varchar2) as
+	procedure Authentication(arglogin in users.login%type, passwd in users.password%type) as
 		authenticated number;
 		loginfiltred users.login%type;
 		passwordfiltred users.password%type;
@@ -53,7 +53,7 @@ create or replace package body RechercheCC as
             
 		exception
 			when erreursyntaxesql then log_pkg.LogErreur('Syntaxe sql dans - LOG= ' || arglogin || 'PASS= ' || argpasswd, true, 'Register'); raise_application_error(-20500, 'De la syntaxe sql est dans l''id ou le password');
-			when others then log_pkg.LogErreur('Erreur autre', true, 'Register'); raise;
+			when others then rollback; log_pkg.LogErreur('Erreur autre', true, 'Register'); raise;
 	end Register;
 	
 	procedure GetFilmById(numero in number) as
@@ -117,7 +117,7 @@ create or replace package body RechercheCC as
             log_pkg.LogInfo('Film envoyé en json: ' || film(1).title, 'GetFilmById');
         exception
             when NegException then log_pkg.LogErreur('NEGATIF', true, 'GetFilmById'); raise_application_error(-20001, 'Le numero doit être > à 0');
-            when others then log_pkg.LogErreur('OTHERS', true, 'GetFilmById'); rollback; raise;
+            when others then rollback; log_pkg.LogErreur('OTHERS', true, 'GetFilmById'); rollback; raise;
 	end GetFilmById;
 
 	procedure SerializeFilm(films in Movies) as
@@ -231,7 +231,78 @@ create or replace package body RechercheCC as
         exception
             when others then log_pkg.LogErreur('Erreur inattendue est survenue', true, 'SearchFilm'); raise;
 	end SearchFilm;
+	
+	procedure Voter(username in review.users%type, idmovie in review.movie%type, note in review.cote%type, commentaire in review.avis%type) as
+		retour number;
+		begin
+			if note >= 0 then
+				select count(*) into retour from review where users like username and movie = idmovie;
+				if retour < 1 then 
+					insert into review values(idmovie, username, note, commentaire, current_date);
+					log_pkg.LogInfo('Vote ajouté avec succès pour ' || username, 'Voter');
+				else
+					update review set users = username, movie = idmovie, cote = note, avis = commentaire, review_date = current_date
+					where users like username and movie = idmovie;
+					log_pkg.LogInfo('Vote mis à jour avec succès pour ' || username, 'Voter');
+					
+				end if;
+			else
+				delete from review where users like username and movie = idmovie;
+				log_pkg.LogInfo('Vote supprimé avec succès pour ' || username, 'Voter');
+			end if;
+			commit;
+			htb.send('application/json', 200);
+		exception
+			when others then rollback; log_pkg.LogErreur('Erreur inattendue est survenue', true, 'Voter'); raise;
+	end Voter;
+	
+	procedure GetVote(username in review.users%type, idmovie in review.movie%type) as
+		vote reviews;
+		begin
+			select * bulk collect into vote from review where users = username and movie = idmovie;
+			
+			if(vote.count > 0) then
+				htb.append_nl('{');
+				htb.append_nl('"movie": ' || vote(1).movie || ',');
+				htb.append_nl('"users": "' || vote(1).users || '",');
+				htb.append_nl('"cote": ' || vote(1).cote || ',');
+				htb.append_nl('"avis": "' || vote(1).avis || '",');
+				htb.append_nl('"review_date": "' || to_char(vote(1).review_date, 'DD/MM/YYYY') || '"');
+				htb.append_nl('}');
+				htb.send('application/json', 200);
+			else
+				htb.send('application/json', 400);
+			end if;
+			
+		exception
+			when others then raise;
+	end GetVote;
 		
+	procedure Replication as
+		begin
+			insert into users@to_cb select * from users where login not in (select login from users@to_cb);
+			insert into review@to_cb select * from review where users not in (select users from review@to_cb);
+			commit;
+			log_pkg.LogInfo('Réplication effectuée', 'Replication');
+		exception
+			when others then rollback; log_pkg.LogErreur('Erreur inattendue est survenue lors de la réplication', true, 'Replication'); raise;
+	end Replication;
+	
+	procedure PurgeCC as -- Pas testé
+		begin
+			delete from movie where id in (
+			    select movie from review 
+			    where review_date <= (sysdate - RechercheCC.date_drop) 
+			    and movie in (
+			    select id from movie@to_cb));
+			commit;
+			log_pkg.LogInfo('Purge des vieux films effectuée', 'PurgeCC');
+		exception
+			when others then log_pkg.LogErreur('Erreur inattendue est survenue lors de la purge des vieux films', true, 'PurgeCC'); rollback; raise;
+	end PurgeCC;
+    
+    begin
+        select INTERVAL '90' DAY (2) into date_drop from dual;
 end RechercheCC;
 /
 show errors

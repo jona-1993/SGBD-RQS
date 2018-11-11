@@ -16,6 +16,7 @@ connect cb/oracle@192.168.0.25/orcl
 
 @AlimCB_pkb.sql
 
+@TriggersCB.sql
 
 disconnect
 
@@ -44,6 +45,10 @@ connect cc/oracle@192.168.0.25/orcl
 
 drop database link to_cb;
 create database link to_cb connect to cb identified by oracle using 'localhost/orcl';
+
+@TriggersCC.sql
+
+@CreateJobs.sql
 
 disconnect
 
