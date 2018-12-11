@@ -37,7 +37,7 @@ CREATE OR REPLACE PACKAGE RechercheCC AS
 
 	procedure SerializeFilm(films in Movies);
 	
-	procedure SearchFilm(arg in varchar2);
+	procedure SearchFilm(arg in varchar2, recurs in number default 0);
 	
 	procedure Voter(username in review.users%type, idmovie in review.movie%type, note in review.cote%type, commentaire in review.avis%type);
 	

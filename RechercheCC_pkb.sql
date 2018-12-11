@@ -167,24 +167,32 @@ create or replace package body RechercheCC as
             when others then log_pkg.LogErreur('Erreur survenue, aucun film sera sérialisé', true, 'SerializeFilm'); raise;
 	end SerializeFilm;
 	
-	procedure SearchFilm(arg in varchar2) as
+	procedure SearchFilm(arg in varchar2, recurs in number default 0) as
         films Movies;
+        listmovieext AlimCB.list_id_movie@to_cb := AlimCB.list_id_movie@to_cb();
         compare_char varchar(2);
-        actors varchar(200);
-        titles movie.title%type;
-        directors varchar(200);
+        actors_v varchar(200);
+        titles varchar(200);
+        directors_v varchar(200);
         dates varchar(12);
-        
+        countmovie number;
         begin
-            
             -- Récupération des différents critères envoyés en paramètre
-            select regexp_replace(regexp_substr(arg, 'ACTORS=\[(.*?)\]'), 'ACTORS=|\[|\]', '') into actors from dual;
-            select regexp_replace(regexp_substr(arg, 'TITLE=\[(.*?)\]'), 'TITLE=|\[|\]', '') into titles from dual;
-            select regexp_replace(regexp_substr(arg, 'DIRECTORS=\[(.*?)\]'), 'DIRECTORS=|\[|\]', '') into directors from dual;
+            select lower(trim(regexp_replace(regexp_substr(arg, 'ACTORS=\[(.*?)\]'), 'ACTORS=|\[|\]', ''))) into actors_v from dual;
+            select lower(trim(regexp_replace(regexp_substr(arg, 'TITLE=\[(.*?)\]'), 'TITLE=|\[|\]', ''))) into titles from dual;
+            select lower(trim(regexp_replace(regexp_substr(arg, 'DIRECTORS=\[(.*?)\]'), 'DIRECTORS=|\[|\]', ''))) into directors_v from dual;
             select regexp_replace(regexp_substr(arg, 'DATE=\[(.*?)\]'), 'DATE=|\[|\]', '') into dates from dual;
             
-            log_pkg.LogInfo('Actions: ' || 'A=' || actors || ';T=' || titles || 'DIR=' || directors || 'DATE=' || dates, 'SearchFilm');
+            log_pkg.LogInfo('Actions: ' || 'A=' || actors_v || ';T=' || titles || 'DIR=' || directors_v || 'DATE=' || dates, 'SearchFilm');
             
+			begin
+				insert into movie select distinct * from movie@to_cb where lower(title) like titles 
+				or lower(original_title) like titles;
+			exception
+				when others then log_pkg.LogInfo('Film déjà sur CC', 'SearchFilm');
+			end;
+			commit;
+			
             if(length(titles) > 0) then  -- Histoire d'éviter de tout rechercher si on a pas mentionné de titre
                 select '%' || titles || '%' into titles from dual;
             end if;
@@ -195,14 +203,14 @@ create or replace package body RechercheCC as
                 (select movie -- actors
                         from movie_actor, artist 
                         where movie_actor.actor = artist.id 
-                        and regexp_like(lower(artist.name), replace(lower(trim(actors)), ',', '|')
+                        and regexp_like(lower(artist.name), replace(actors_v, ',', '|')
                 ))
                 or id in (select id from movie  -- title
-                    where lower(title) like lower(trim(titles)) 
-                    or lower(original_title) like lower(trim(titles)))
+                    where lower(title) like titles 
+                    or lower(original_title) like titles)
                 or id in (select movie from movie_director, artist -- directors
                         where movie_director.director = artist.id 
-                        and regexp_like(lower(artist.name), replace(lower(trim(directors)), ',', '|')));
+                        and regexp_like(lower(artist.name), replace(directors_v, ',', '|')));
                 
             log_pkg.LogInfo('Films trouvés en premier lieu: ' || films.count, 'SearchFilm');
             
@@ -225,12 +233,87 @@ create or replace package body RechercheCC as
             end if;
             
             log_pkg.LogInfo('Films trouvés en second lieu: ' || films.count, 'SearchFilm');
+			
+			if recurs <> 1 then
+				
+				if length(titles) > 0 then
+					select replace(titles, '%', '') into titles from dual; -- Optimisation de la recherche par titre dans la centrale
+				end if;
+				
+				select distinct movies_ext.id bulk collect into listmovieext from movies_ext@to_cb 
+				where id in  
+					(select id -- actors
+							from movies_ext@to_cb 
+							where regexp_like(lower(movies_ext.actors), replace(actors_v, ',', '|'))
+					)
+					or id in (select id from movies_ext@to_cb  -- title
+						where lower(title) like titles 
+						or lower(original_title) like titles
+					)
+					or id in (select id from movies_ext@to_cb -- directors
+							where regexp_like(lower(movies_ext.directors), replace(directors_v, ',', '|'))
+					)
+					or id in (select id from movies_ext@to_cb -- Date égal seulement sinon ça fous le boxon
+							where (to_date(to_char(movies_ext.release_date, 'DD/MM/YYYY'), 'DD/MM/YYYY') - to_date(substr(dates, 3, length(dates)), 'DD/MM/YYYY')) = 0
+					);
+				
+				
+				select count(*) into countmovie from table(films);   
+       				
+				if countmovie < listmovieext.COUNT then
+				
+					begin -- Forcément, je dois pouvoir récupérer les quelques films ajoutés
+						ALIMCB.Ajouter@to_cb(listmovieext); -- Ou alors il aurai fallu que Ajouter ne provoque aucune exception
+					exception
+						when others then log_pkg.LogErreur('Erreur d''AlimCB', true, 'SearchFilm'); -- Je ne remonte pas l'exception car je dois continuer
+					end;
+					
+					FOR i IN listmovieext.FIRST..listmovieext.LAST LOOP -- Ajout à CC
+						begin
+							insert into movie (select * from movie@to_cb where id = listmovieext(i));
+							log_pkg.LogInfo('Insere movie: ' || listmovieext(i), 'SearchFilm');
+							insert into artist (
+								select artist.id, artist.name from movie@to_cb, movie_actor@to_cb, artist@to_cb 
+								where movie.id = listmovieext(i) 
+								and movie.id = movie_actor.movie
+								and movie_actor.actor = artist.id
+								union
+								select artist.id, artist.name from movie@to_cb, movie_director@to_cb, artist@to_cb 
+								where movie.id = listmovieext(i) 
+								and movie.id = movie_director.movie
+								and movie_director.director = artist.id);
+							log_pkg.LogInfo('Insere artists: ' || listmovieext(i), 'SearchFilm');
+							insert into movie_genre (select movie.id, movie_genre.genre from movie@to_cb, movie_genre@to_cb where movie.id = movie_genre.movie and id = listmovieext(i));
+							
+							log_pkg.LogInfo('Insere movie_genre: ' || listmovieext(i), 'SearchFilm');
+							insert into movie_actor (select movie.id, movie_actor.actor from movie@to_cb, movie_actor@to_cb where movie.id = movie_actor.movie and id = listmovieext(i));
+							
+							log_pkg.LogInfo('Insere movie_actor: ' || listmovieext(i), 'SearchFilm');
+							insert into movie_director (select movie.id, movie_director.director from movie@to_cb, movie_director@to_cb where movie.id = movie_director.movie and id = listmovieext(i));
+							
+							log_pkg.LogInfo('Insere movie_director: ' || listmovieext(i), 'SearchFilm');
                 
-            SerializeFilm(films);
-            
+							commit;
+							log_pkg.LogInfo('Film validé: ' || listmovieext(i), 'SearchFilm');
+							exception
+								when others then rollback; log_pkg.LogErreur('Erreur d''insertion de l''id: ' || listmovieext(i), true, 'SearchFilm'); -- Je ne raise pas car je dois essayer tous les films
+							end;
+					END LOOP;
+					SearchFilm(arg, 1); -- Je dois afficher maintenant
+				else
+					SerializeFilm(films);
+				end if;
+				
+			end if;
+      
+      if recurs = 1 then -- Je sérialise qu'une seule fois
+        SerializeFilm(films);
+      end if;
+        
         exception
             when others then log_pkg.LogErreur('Erreur inattendue est survenue', true, 'SearchFilm'); raise;
 	end SearchFilm;
+	
 	
 	procedure Voter(username in review.users%type, idmovie in review.movie%type, note in review.cote%type, commentaire in review.avis%type) as
 		retour number;
@@ -279,17 +362,27 @@ create or replace package body RechercheCC as
 	end GetVote;
 		
 	procedure Replication as
+		cursor usr is select * from users where login not in (select login from users@to_cb) for update nowait; 
+		cursor rvw is select * from review where users not in (select users from review@to_cb) for update nowait;
 		begin
+			--lock table review, users in share mode; -- Je fais attendre en attendant que la réplication soit finie (néanmoins, les users pourront se connecter et consulter leur avis) -- Moins brutal !!!
+			
+			open usr;
+			open rvw;
 			insert into users@to_cb select * from users where login not in (select login from users@to_cb);
 			insert into review@to_cb select * from review where users not in (select users from review@to_cb);
+			close usr;
+			close rvw;
+			
 			commit;
 			log_pkg.LogInfo('Réplication effectuée', 'Replication');
 		exception
 			when others then rollback; log_pkg.LogErreur('Erreur inattendue est survenue lors de la réplication', true, 'Replication'); raise;
 	end Replication;
 	
-	procedure PurgeCC as -- Pas testé
+	procedure PurgeCC as
 		begin
+			-- Manque la suppression d'avis avant la suppression des films (ERROR)
 			delete from movie where id in (
 			    select movie from review 
 			    where review_date <= (sysdate - RechercheCC.date_drop) 

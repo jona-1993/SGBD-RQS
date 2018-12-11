@@ -1,0 +1,20 @@
+E:\SGBD3\RQS WPF\RQS WPF\bin\Debug\RQS WPF.exe.config
+E:\SGBD3\RQS WPF\RQS WPF\bin\Debug\RQS WPF.exe
+E:\SGBD3\RQS WPF\RQS WPF\bin\Debug\RQS WPF.pdb
+E:\SGBD3\RQS WPF\RQS WPF\bin\Debug\Newtonsoft.Json.dll
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\App.g.cs
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF_MarkupCompile.cache
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF_MarkupCompile.lref
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.g.resources
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS_WPF.Properties.Resources.resources
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.csproj.GenerateResource.cache
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.csproj.CoreCompileInputs.cache
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.csproj.CopyComplete
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.exe
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.pdb
+E:\SGBD3\RQS WPF\RQS WPF\bin\Debug\Newtonsoft.Json.xml
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\Login.g.cs
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\Login.baml
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQSApp.g.cs
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQSApp.baml
+E:\SGBD3\RQS WPF\RQS WPF\obj\Debug\RQS WPF.csprojAssemblyReference.cache

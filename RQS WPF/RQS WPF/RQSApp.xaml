@@ -1,0 +1,125 @@
+﻿<Window x:Class="RQS_WPF.RQSApp"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RQS_WPF"
+        mc:Ignorable="d"
+        Title="RQS App" Height="454" Width="800" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None">
+    <Grid HorizontalAlignment="Left" Width="800">
+        <Grid.Background>
+            <ImageBrush ImageSource="D:\SGBD3\SGBD-RQS\RQS WPF\images\App.jpg"/>
+        </Grid.Background>
+        <Label x:Name="TitleLabel" Content="Rennequinepolis - Recherche" HorizontalAlignment="Left" Margin="270,33,0,0" VerticalAlignment="Top" FontFamily="Comic Sans MS" FontSize="20"/>
+        <Label x:Name="RechercherLabel" Content="Rechercher: " HorizontalAlignment="Left" Margin="45,129,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="RechercherTB" HorizontalAlignment="Left" Height="23" Margin="134,132,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <StackPanel x:Name="GroupRadioCritere" Margin="270,132,379,232">
+            <RadioButton x:Name="FilmIdBR" Content="Par id de Film" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Unchecked="FilmIdBR_Unchecked"/>
+            <RadioButton x:Name="FilmBR" Content="Par Titre" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <RadioButton x:Name="ActeurBR" Content="Par Acteurs" HorizontalAlignment="Left"  VerticalAlignment="Top"/>
+            <RadioButton x:Name="DirectorBR" Content="Par Réalisateurs" HorizontalAlignment="Left"  VerticalAlignment="Top"/>
+            <RadioButton x:Name="DateBR" Content="Par Date" HorizontalAlignment="Left"  VerticalAlignment="Top" Checked="DateBR_Checked" Unchecked="DateBR_Unchecked"/>
+            <RadioButton x:Name="OthersBR" Content="Recherche personnalisé" HorizontalAlignment="Left"  VerticalAlignment="Top" Checked="OthersBR_Checked" Unchecked="OthersBR_Unchecked"/>
+        </StackPanel>
+        <StackPanel x:Name="DateGroupRadio" HorizontalAlignment="Left" Height="47" Margin="295,227,0,0" VerticalAlignment="Top" Width="103" Visibility="Hidden">
+            <RadioButton Name="EqualsDateBR" Content="Date exacte" IsChecked="True"/>
+            <RadioButton Name="InfDateBR" Content="Date inférieure"/>
+            <RadioButton Name="SupDateBR"  Content="Date supérieure"/>
+        </StackPanel>
+        <Button x:Name="CloseButton" Content="Se déconnecter" HorizontalAlignment="Left" Margin="353,389,0,0" VerticalAlignment="Top" Width="102" Click="CloseButton_Click" Height="32"/>
+        <Button x:Name="RechercheButton" Content="Recherche" HorizontalAlignment="Left" Margin="134,170,0,0" VerticalAlignment="Top" Width="120" Height="21" Click="RechercheButton_Click" Cursor="Hand"/>
+        <TextBlock x:Name="GreetingsTB" HorizontalAlignment="Left" Margin="92,278,0,0" TextWrapping="Wrap" Text="none" VerticalAlignment="Top" FontFamily="Comic Sans MS" FontSize="22" FontWeight="Bold"/>
+        <Label x:Name="NotFoundLabel" Content="Rien trouvé.." HorizontalAlignment="Left" Margin="134,196,0,0" VerticalAlignment="Top" Background="{x:Null}" Foreground="#FFCF2A2A" Visibility="Hidden"/>
+        <Canvas x:Name="RecherchePersoCanvas" HorizontalAlignment="Left" Height="170" Margin="443,132,0,0" VerticalAlignment="Top" Width="320" Visibility="Hidden">
+            <Rectangle Fill="#FF6767FF" Height="170" Stroke="Black" Width="320"/>
+            <Label Content="Titre: " Canvas.Left="46" Canvas.Top="15"/>
+            <Label Content="Acteurs: " Canvas.Left="30" Canvas.Top="45"/>
+            <Label Content="Réalisateurs: " Canvas.Left="7" Canvas.Top="77"/>
+            <Label Content="Date: " Canvas.Left="45" Canvas.Top="108"/>
+            <TextBox x:Name="PersoTitleTB" Height="23" Canvas.Left="91" TextWrapping="Wrap" Canvas.Top="15" Width="120"/>
+            <TextBox x:Name="PersoActorsTB" Height="23" Canvas.Left="91" TextWrapping="Wrap" Canvas.Top="45" Width="120"/>
+            <TextBox x:Name="PersoDirectorsTB" Height="23" Canvas.Left="91" TextWrapping="Wrap" Canvas.Top="81" Width="120"/>
+            <TextBox x:Name="PersoDateTB" Height="23" Canvas.Left="91" TextWrapping="Wrap" Canvas.Top="112" Width="120"/>
+            <StackPanel Height="50" Canvas.Left="229" Canvas.Top="108" Width="81">
+                <RadioButton x:Name="PersoDateEqRadio" Content="Egal" IsChecked="True"/>
+                <RadioButton x:Name="PersoDateInRadio" Content="Inférieur"/>
+                <RadioButton x:Name="PersoDateSuRadio" Content="Supérieur"/>
+            </StackPanel>
+            <CheckBox x:Name="PersoSurCentraleCB" Content="Sur centrale" Canvas.Left="229" Canvas.Top="10"/>
+        </Canvas>
+        <Canvas x:Name="InfosFilmCanvas" HorizontalAlignment="Left" Height="289" Margin="30,86,0,0" VerticalAlignment="Top" Width="733" Visibility="Hidden">
+            <Rectangle Fill="#FF6767FF" Height="289" Stroke="Black" Width="733"/>
+            <Label x:Name="InfoTitleLabel" Content="Infos Film" Canvas.Left="339" Canvas.Top="11" FontFamily="Comic Sans MS" FontSize="14" FontWeight="Bold"/>
+            <Label x:Name="FilmTitleLabel" Content="Titre: " Canvas.Left="73" Canvas.Top="44" RenderTransformOrigin="1.55,0.731"/>
+            <Label x:Name="FilmOriginalTitle" Content="Titre Original: " Canvas.Left="28" Canvas.Top="70"/>
+            <Label x:Name="FilmStatus" Content="Status: " Canvas.Left="60" Canvas.Top="98"/>
+            <TextBlock x:Name="FilmTitleTB" Canvas.Left="113" TextWrapping="Wrap" Text="none" Canvas.Top="49"/>
+            <TextBlock x:Name="FilmOriginalTitleTB" Canvas.Left="113" TextWrapping="Wrap" Text="none" Canvas.Top="75"/>
+            <TextBlock x:Name="FilmStatusTB" Canvas.Left="113" TextWrapping="Wrap" Text="none" Canvas.Top="101"/>
+            <Label x:Name="FilmReleaseDateLabel" Content="Date de Sortie: " Canvas.Left="297" Canvas.Top="70"/>
+            <Label x:Name="FilmVoteAverageLabel" Content="Note obtenue: " Canvas.Left="309" Canvas.Top="93"/>
+            <Label x:Name="FilmVoteCountLabel" Content="Nombre de votes: " Canvas.Left="285" Canvas.Top="119"/>
+            <Label x:Name="FilmCertificationLabel" Content="Certification: " Canvas.Left="28" Canvas.Top="147"/>
+            <Label x:Name="FilmRuntimeLabel" Content="Durée: " Canvas.Left="60" Canvas.Top="124"/>
+            <TextBlock x:Name="FilmRuntimeTB" Canvas.Left="113" TextWrapping="Wrap" Text="none" Canvas.Top="129" RenderTransformOrigin="0.556,-1.125"/>
+            <TextBlock x:Name="FilmReleaseDateTB" Canvas.Left="394" TextWrapping="Wrap" Text="none" Canvas.Top="75"/>
+            <TextBlock x:Name="FilmVoteAverageTB" Canvas.Left="394" TextWrapping="Wrap" Text="none" Canvas.Top="98"/>
+            <TextBlock x:Name="FilmVoteCountTB" Canvas.Left="393" TextWrapping="Wrap" Text="none" Canvas.Top="124"/>
+            <TextBlock x:Name="FilmCertificationTB" Canvas.Left="113" TextWrapping="Wrap" Text="none" Canvas.Top="152"/>
+            <Image x:Name="PosterImage" Height="145" Canvas.Left="537" Canvas.Top="70" Width="131"/>
+            <Button x:Name="PreviewButton" Content="Précédent" Canvas.Left="56" Canvas.Top="249" Width="75" Click="PreviewButton_Click"/>
+            <Button x:Name="NextButton" Content="Suivant" Canvas.Left="593" Canvas.Top="249" Width="75" Click="NextButton_Click"/>
+            <TextBlock x:Name="PageMinTB" Canvas.Left="309" TextWrapping="Wrap" Text="1" Canvas.Top="254"/>
+            <TextBlock x:Name="PageMaxTB" Canvas.Left="394" TextWrapping="Wrap" Text="1" Canvas.Top="254"/>
+            <Label Content="/" Canvas.Left="351" Canvas.Top="249" RenderTransformOrigin="0.447,0.423"/>
+            <Image x:Name="CroixButton" Height="19" Canvas.Left="685" Canvas.Top="10" Width="20" Source="D:\SGBD3\SGBD-RQS\RQS WPF\images\croix.png" RenderTransformOrigin="0.525,0.5" MouseDown="CroixButton_MouseDown"/>
+            <Image x:Name="VoteButton" Height="36" Canvas.Left="340" Canvas.Top="208" Width="36" Source="D:\SGBD3\SGBD-RQS\RQS WPF\images\VoteButton.png" MouseDown="VoteButton_MouseDown"/>
+            <TextBlock x:Name="FilmCertificationDescriptionTB" Canvas.Left="47" TextWrapping="Wrap" Canvas.Top="173" Text="none"/>
+            <Label Content="Genre: " Canvas.Left="340" Canvas.Top="47"/>
+            <TextBlock x:Name="GenreTB" Canvas.Left="394" TextWrapping="Wrap" Text="none" Canvas.Top="52"/>
+            <Button x:Name="InfoProdButton" Content="Infos de Production" Canvas.Left="47" Canvas.Top="14" Width="121" Click="InfoProdButton_Click"/>
+            <Canvas x:Name="VoteCanvas" Height="289" Width="733" Visibility="Hidden">
+                <Rectangle Fill="#FF6767FF" Height="289" Stroke="Black" Width="733"/>
+                <Label Content="VOTER" Canvas.Left="334" Canvas.Top="30" FontFamily="Comic Sans MS" FontSize="18"/>
+                <Label Content="Laissez un avis: " Canvas.Left="115" Canvas.Top="93"/>
+                <TextBox x:Name="AvisTB" Height="23" Canvas.Left="212" TextWrapping="Wrap" Canvas.Top="96" Width="333"/>
+                <Slider x:Name="CoteSlider" Canvas.Left="254" Canvas.Top="177" Width="222" ValueChanged="CoteSlider_ValueChanged"/>
+                <TextBlock x:Name="ValueSlider" Canvas.Left="490" TextWrapping="Wrap" Text="0" Canvas.Top="177"/>
+                <Label Content="Laissez une note (0 -&gt; 10) :" Canvas.Left="291" Canvas.Top="146"/>
+                <Button x:Name="SendVoteButton" Content="Envoyer" Canvas.Left="456" Canvas.Top="237" Width="75" Click="SendVoteButton_Click"/>
+                <Button x:Name="CancelVoteButton" Content="Annuler" Canvas.Left="212" Canvas.Top="237" Width="75" Click="CancelVoteButton_Click"/>
+                <TextBlock x:Name="TitleFilmAvisTB" Canvas.Left="74" TextWrapping="Wrap" Text="none" Canvas.Top="42"/>
+                <Label Content="Film :" Canvas.Left="31" Canvas.Top="37"/>
+                <Button x:Name="DeleteVoteButton" Content="Supprimer Vote" Canvas.Left="324" Canvas.Top="237" Width="93" Click="DeleteVoteButton_Click"/>
+            </Canvas>
+            <Canvas x:Name="InfoProdCanvas" Height="289" Width="733" Visibility="Hidden">
+                <Rectangle Fill="#FF6767FF" Height="289" Stroke="Black" Width="733"/>
+                <Label Content="Infos Production" Canvas.Left="311" Canvas.Top="10" FontFamily="Comic Sans MS" FontSize="16"/>
+                <Label Content="Acteurs: " Canvas.Left="156" Canvas.Top="51" RenderTransformOrigin="0.679,0.269"/>
+                <Label Content="Réalisateurs: " Canvas.Left="502" Canvas.Top="51"/>
+                <Button x:Name="CloseInfoProdButton" Content="Fermer" Canvas.Left="329" Canvas.Top="248" Width="75" Click="CloseInfoProdButton_Click"/>
+                <ListBox x:Name="DirectorsLB" HorizontalAlignment="Left" Height="134" VerticalAlignment="Top" Width="220" Canvas.Left="429" Canvas.Top="87"/>
+                <ListBox x:Name="ActorsLB" HorizontalAlignment="Left" Height="134" VerticalAlignment="Top" Width="220" Canvas.Left="73" Canvas.Top="87"/>
+            </Canvas>
+
+        </Canvas>
+        <Canvas x:Name="SimpleDisplayCanvas" HorizontalAlignment="Left" Height="132" Margin="403,132,0,0" VerticalAlignment="Top" Width="249" Visibility="Hidden">
+            <Rectangle Fill="#FF6767FF" Height="132" Stroke="Black" Width="249"/>
+            <Label Content="Trouvé:" Canvas.Left="6"/>
+            <TextBlock x:Name="TitleSimpleTB" Canvas.Left="99" TextWrapping="Wrap" Text="TextBlock" Canvas.Top="29"/>
+            <TextBlock x:Name="ReleaseDateSimpleTB" Canvas.Left="99" TextWrapping="Wrap" Text="TextBlock" Canvas.Top="94"/>
+            <TextBlock x:Name="StatusSimpleTB" Canvas.Left="99" TextWrapping="Wrap" Text="TextBlock" Canvas.Top="71"/>
+            <TextBlock x:Name="OriginalTitleSimpleTB" Canvas.Left="99" TextWrapping="Wrap" Text="TextBlock" Canvas.Top="50"/>
+            <Label Content="Titre: " Canvas.Left="59" Canvas.Top="24"/>
+            <Label Content="Titre Original: " Canvas.Left="14" Canvas.Top="45"/>
+            <Label Content="Status: " Canvas.Left="51" Canvas.Top="66" RenderTransformOrigin="0.438,1.154"/>
+            <Label Content="Date de sortie: " Canvas.Left="9" Canvas.Top="89"/>
+        </Canvas>
+        
+
+
+
+
+
+    </Grid>
+</Window>
